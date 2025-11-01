@@ -1,0 +1,18 @@
+# Practical 8  (Wireshark)
+tcp.port == 80
+udp.port == 53
+http
+dns
+frame contains “Google”
+frame contains “edge”
+http contains “GET”
+
+# Practical 9 (Nmap)
+nmap -p 1-200 <ip_address> (Scan TCP ports 1 through 200 on target)
+nmap -F <ip_address> (Scans a smaller list of commonly used ports)
+nmap -p <ip_address> (Scan only TCP port 80)
+nmap -sT <ip_address> (Uses the OS networking stack to complete TCP handshakes)
+nmap -sU <ip_address> (Checks UDP ports : often slower)
+nmap -A <ip_address> (Combines several features : noisy)
+nmap -O <ip_address> (OS fingerprinting)
+nmap  <ip_address>/24 (subnet scan)

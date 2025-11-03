@@ -179,33 +179,29 @@ Is this cipher secure? (No. It's a simple example. A real product cipher like AE
 What is a transposition cipher? (A cipher that rearranges the order of the letters, but doesn't change the letters themselves. E.g., 'hello' -> 'eollh').
 
 Experiment 6: Study of Packet Sniffer Tool (Wireshark)
-Aim: To use the Wireshark tool to capture, view, and filter live network traffic to understand network protocols and security vulnerabilities.
+Aim: To use the Wireshark tool to capture, view, and filter live network traffic using various display filters to understand network protocols and security vulnerabilities.
 Theory:
 Wireshark: A passive network analysis tool (a "packet sniffer") that intercepts and logs all network packets.
 Promiscuous Mode: The default mode ("non-promiscuous") only captures packets for your computer. Promiscuous mode captures all packets on the local network segment (e.g., all Wi-Fi traffic around you), even if it's for other devices.
 Vulnerability: Wireshark reveals any data sent in plain text. This includes unencrypted (HTTP) websites, FTP, Telnet, and some email protocols.
-Explanation of Commands (Display Filters): Display filters let you find specific packets in a large capture.
-Address Filters:
-ip.addr == 142.250.196.78 (Shows packets to or from this Google IP).
-ip.src == 192.168.1.10 (Shows packets only from this source IP).
+Explanation of Commands (Display Filters): Display filters let you find specific packets in a large capture after you have stopped capturing.
 Protocol Filters:
-http (Shows only HTTP traffic).
-dns (Shows only DNS (domain name) lookups).
-arp (Shows "Address Resolution Protocol" - how devices find MAC addresses).
-tcp or udp (Shows only traffic using these transport protocols).
+http: Shows only Hypertext Transfer Protocol packets. This is how you see unencrypted web browsing.
+dns: Shows only Domain Name System packets. This lets you see all the website lookups (e.g., "https://www.google.com/search?q=google.com" -> 142.250.196.78) your computer is making.
 Port Filters:
-tcp.port == 80 (Same as http filter).
-tcp.port == 443 (Shows HTTPS traffic, but the payload will be encrypted and unreadable).
+tcp.port == 80: Shows all traffic using TCP port 80. This is effectively the same as the http filter, as 80 is the standard port for HTTP.
+udp.port == 53: Shows all traffic using UDP port 53. This is effectively the same as the dns filter, as 53 is the standard port for DNS.
 String Filters:
-tcp contains "password" (A powerful filter that searches inside TCP packets for the literal string "password". This is great for finding insecure logins).
+frame contains "Google": Searches the raw data (the entire frame) of every packet for the literal string "Google". This is a broad search.
+frame contains "edge": Similar to above, searches every packet for the string "edge".
+http contains "GET": A more specific search. It only looks inside HTTP packets for the string "GET", which is the command your browser uses to request a webpage from a server.
 Output Observed:
-We started Wireshark in promiscuous mode on the Wi-Fi interface.
-We opened a browser and went to an insecure login page (e.g., http://test.net).
-We typed "admin" and "password123" and hit login.
+We started Wireshark capture on our Wi-Fi interface.
+We opened a browser and went to http://www.google.com (note: Google often forces HTTPS, but the initial request might be HTTP or DNS).
 We stopped the capture.
-We applied the display filter http.request.method == POST.
-We saw one packet. In the "Packet Details" pane, we expanded "Hypertext Transfer Protocol" -> "HTML Form URL Encoded".
-We could clearly see the plain text: username=admin and password=password123.
+We applied the filter dns. We observed packets showing our computer (source) asking a DNS server (destination) for the IP address of "www.google.com".
+We cleared the filter and applied http. We observed GET / HTTP/1.1 requests from our IP to a Google IP, and the server's response.
+We applied the filter frame contains "Google". We saw both the DNS requests (which contained "https://www.google.com/search?q=google.com") and the HTTP packets (which contained "Host: www.google.com"), demonstrating the filter's power.
 
 Possible Viva Questions:
 Is Wireshark an active or a passive tool? (It is passive. It just listens, it doesn't send its own packets or modify traffic).
@@ -215,7 +211,7 @@ What is an active attack? (An attack that modifies data or the network, e.g., a 
 What is SSL/TLS? (From syllabus. Secure Sockets Layer / Transport Layer Security. It's the protocol that provides encryption for HTTPS, making web browsing secure).
 
 Experiment 7: Study of nmap Tool
-Aim: To use the nmap (Network Mapper) tool to perform network reconnaissance by scanning a target for open ports, running services, and OS version.
+Aim: To use the nmap (Network Mapper) tool with different command-line options to perform network reconnaissance by scanning a target for open ports, running services, and OS version.
 Theory:
 nmap: An active network scanning tool. It is the first step in an attack: reconnaissance (information gathering).
 It works by sending probes to a target's ports to see how they respond.
@@ -224,24 +220,19 @@ Open: The service is listening (e.g., Port 80 is open for a web server).
 Closed: The port is reachable, but no service is listening.
 Filtered: nmap can't tell. A firewall is likely blocking the probe.
 Explanation of Commands (nmap Options):
-nmap <target> (e.g., nmap scanme.nmap.org)
-Default scan. Scans the 1000 most common TCP ports.
--sn (Ping Scan):
-nmap -sn 192.168.1.0/24
-Finds which hosts are "up" on a network without port scanning them.
--sS (TCP SYN Scan):
-nmap -sS <target>
-The default "stealth" scan. It's fast and less likely to be logged because it never completes the TCP connection.
--sU (UDP Scan):
-nmap -sU <target>
-Scans for UDP ports (e.g., DNS on port 53). Much slower.
--O (OS Fingerprinting):
-nmap -O <target>
-Tries to guess the target's operating system (e.g., "Linux 4.x", "Windows 10").
--sV (Service Version):
-nmap -sV <target>
-Tries to determine the exact software and version on an open port (e.g., "Apache httpd 2.4.7"). This is key for finding exploits.
-Output Observed: We ran nmap -sS -sV -O scanme.nmap.org:
+nmap -p 1-200 <ip_address>: (Port Range Scan) Scans only the specific TCP ports from 1 through 200.
+nmap -F <ip_address>: (Fast Scan) Scans only the 100 most common ports. This is much faster than a full scan.
+nmap -p 80 <ip_address>: (Single Port Scan) Scans only TCP port 80. Used to quickly check if a target is running a web server.
+nmap -sT <ip_address>: (TCP Connect Scan) This scan completes the full TCP three-way handshake (SYN, SYN/ACK, ACK). It's reliable but very "noisy" and easily logged by firewalls.
+nmap -sU <ip_address>: (UDP Scan) Scans for open UDP ports (like DNS/53). This is much slower than TCP scans.
+nmap -O <ip_address>: (OS Fingerprinting) Tries to guess the target's operating system (e.g., "Linux 4.x", "Windows 10") by analyzing its network stack.
+nmap -A <ip_address>: (Aggressive Scan) A powerful, "noisy" scan that combines several features at once:
+OS detection (-O)
+Service Version detection (-sV)
+Default Script scanning (-sC)
+Traceroute
+nmap <ip_address>/24: (Subnet Scan) This scans an entire subnet (the /24 means it scans all 256 IPs in that range, e.g., 192.168.1.0 to 192.168.1.255). It's used for host discovery to see which machines are online.
+Output Observed: We ran the aggressive scan nmap -A scanme.nmap.org:
 Starting Nmap...
 Host is up (0.12s latency).
 Not shown: 996 filtered ports
@@ -250,19 +241,20 @@ PORT     STATE  SERVICE      VERSION
 80/tcp   open   http         Apache httpd 2.4.7
 31337/tcp open  Elite
 
+
 Device type: general purpose
 Running: Linux 3.X
 OS details: Linux 3.10 - 3.13
 ...
 Nmap done: 1 IP address (1 host up) scanned in 15.32 seconds
-This tells us the target is a Linux server, running a web server (Apache 2.4.7) and an SSH server (OpenSSH 6.6.1).
+This single -A command told us the host is a Linux server, what ports are open (22, 80), and the exact versions of the services running (OpenSSH 6.6.1, Apache 2.4.7).
 
 Possible Viva Questions:
 Is nmap an active or passive tool? (It is active. It actively sends probes to the target).
-What's the difference between a SYN scan (-sS) and a Connect scan (-sT)? (A Connect scan completes the full TCP handshake, which is "noisy" and easily logged. A SYN scan is stealthy and just sends the first SYN packet, resetting the connection before it completes).
+What's the difference between a SYN scan (-sS) and a Connect scan (-sT)? (A Connect scan (-sT) completes the full TCP handshake, which is "noisy" and easily logged. A SYN scan (-sS) is stealthy and just sends the first SYN packet, resetting the connection before it completes).
 What is a firewall? How can it stop nmap? (From syllabus. A firewall is a device that filters traffic. It can be configured to block nmap's probes, causing ports to show as "filtered").
 What's the difference between an IDS and a Firewall? (A Firewall blocks based on rules (IP, port). An IDS detects based on patterns (e.g., it can be trained to see "this looks like an nmap scan" and send an alert)).
-Why is the -sV (version) scan so important to an attacker? (Because exploits are specific to software versions. If they find "Apache 2.4.7", they can search for a known vulnerability in that specific version).
+Why is the -A (aggressive) scan so useful to an attacker? (Because it combines OS detection and version detection. Exploits are specific to software versions, so finding "Apache 2.4.7" allows an attacker to search for a known vulnerability in that specific version).
 
 Experiment 8: Cryptanalysis or Decoding of Vigenère Cipher
 Aim: To understand the Vigenère cipher by implementing its algorithm to encrypt a given message ("Security") using your name as the key.

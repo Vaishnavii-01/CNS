@@ -99,6 +99,17 @@ Solving (The Method): We would write a Java program using the javax.crypto libra
 Once with the transformation AES/ECB/PKCS5Padding.
 Once with the transformation AES/CBC/PKCS5Padding.
 Output Observed:
+This experiment clearly shows that for the exact same plaintext ("Hello I am from INFT department") and the exact same secret key, the choice of mode drastically changes the output.
+Screenshot 1 (CBC Mode):
+Mode: CBC
+IV: 09876543
+Output: D0C0920B...E7DE5
+Analysis: The IV is used to "randomize" the first block, and the output of each block is chained to the next. This is secure.
+Screenshot 2 (ECB Mode):
+Mode: ECB
+IV: (None used)
+Output: 86C49A...029BEF7
+Analysis: The output is different from CBC because no IV is used and no chaining occurs. This is insecure as it would reveal patterns in the data.
 ECB Output: The encrypted image would still clearly show the outline or "ghost" of the original image. You could tell what it was.
 CBC Output: The encrypted image would look like complete and total random noise (static). This is the desired, secure result.
 

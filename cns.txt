@@ -1,0 +1,300 @@
+Experiment 1: Breaking the Mono-alphabetic Substitution Cipher
+Aim: To write a Java program that decrypts a ciphertext encrypted by a mono-alphabetic substitution cipher without knowing the key, using the technique of letter frequency analysis.
+Algorithm/Theory:
+Mono-alphabetic Cipher: A substitution cipher where each letter of the alphabet is consistently replaced by another letter. For example, every 'A' becomes 'G', every 'B' becomes 'T', etc.
+Weakness: This cipher hides the letters, but it fails to hide the statistical properties of the language.
+Frequency Analysis: In English, letters are not used equally. 'E' is the most common (around 12.7%), followed by 'T' (9.1%), 'A' (8.2%), and so on. 'Z', 'Q', and 'J' are very rare.
+Algorithm:
+Take the provided ciphertext.
+Write a program to count the occurrences of each letter (A-Z).
+Calculate the percentage frequency of each letter in the ciphertext.
+Compare the ciphertext frequencies to the known English frequencies.
+The most frequent letter in the ciphertext is probably 'E'. The next most frequent is probably 'T', and so on.
+Substitute your best guesses (e.g., replace all 'Z' with 'E') and look for readable words or common patterns (like 'THE', 'AND', 'ING') to confirm or deny your guesses.
+Solving (The Method): For the given ciphertext: Zio ltkxozol gjqz zlqz tkfqztklz zio ktkxzkotfzkj ykg tqozgfl lt qf oxfzoz zq ftk kqtlzo...
+Our Java program would iterate through this entire text.
+It would maintain an array of 26 integers, one for each letter.
+It would ignore spaces and punctuation, and treat uppercase/lowercase as the same.
+It would produce a frequency count. For example (this is just a guess):
+Z: 15.2%
+Q: 10.1%
+T: 8.5%
+...etc.
+Output Observed: The program's output would be a list of letters and their frequencies. Based on this, we would make our first hypothesis:
+The most common English letter is 'E'.
+The most common ciphertext letter is 'Z'.
+Hypothesis: Z = e
+We would then substitute 'e' for 'Z' in the text: eio ltkxoeol gjqe elqe tkfqetkle eio ktkxekotfkj ykg tqoegfl lt qf oxfoe eq ftk kqtleo...
+Seeing eio and eio repeated, we can guess this is the. This gives us:
+Z = e
+I = h
+O = t
+We would continue this process of guessing, substituting, and refining until the full message is decoded.
+
+Possible Viva Questions:
+What is a substitution cipher? (A cipher that replaces one unit of plaintext, like a letter, with one unit of ciphertext).
+Why does frequency analysis work? (Because the underlying language's letter frequencies are not hidden, only the letters themselves are).
+How would you make this cipher stronger? (By using a polyalphabetic cipher, like Vigenère, which uses multiple substitution alphabets and flattens the frequency distribution).
+What is the "CIA Triad"? (Confidentiality, Integrity, Availability. This cipher breaks Confidentiality).
+What is a passive attack? (An attack where the intruder only listens to or monitors traffic, like sniffing. Frequency analysis is a form of passive attack on a stored message).
+
+Experiment 2: Cryptanalysis or Decoding of Playfair Cipher
+Aim: To understand the Playfair cipher by implementing its algorithm to encrypt a given message (your name) using a specific key ("October").
+Algorithm/Theory: The Playfair cipher is a polygraphic substitution cipher, meaning it encrypts pairs of letters (digraphs) at a time.
+Key Grid: A 5x5 grid is created from the key.
+Fill the key's unique letters (e.g., "OCTOBER" -> O, C, T, B, E, R).
+Fill the remaining alphabet letters, combining 'I' and 'J' into one cell.
+Plaintext Rules:
+Break the message into pairs (e.g., "HELLO" -> "HE" "LL" "O").
+If a pair has double letters (like "LL"), insert an 'X' between them ("HE" "LX" "LO").
+If the message has an odd length, add a 'Z' (or 'X') at the end.
+Encryption Rules (for each pair):
+Same Row: Replace each letter with the letter immediately to its right (wrap around to the left if at the end).
+Same Column: Replace each letter with the letter immediately below it (wrap around to the top if at the bottom).
+Rectangle: Replace each letter with the letter on the same row but at the other corner of the rectangle.
+Solving (Key = "OCTOBER", Name = "ADITYA"):
+Key Grid:
+O C T B E
+R A D F G
+H I/J K L M
+N P Q S U
+V W X Y Z
+Plaintext: ADITYA
+Prepare Pairs: AD IT YA (No doubles, even length. Perfect.)
+Encrypt Pairs:
+AD: Same row (Row 2). A -> D, D -> F. Result: DF
+IT: Rectangle. I(3,2) and T(1,3). Corners are (3,2), (1,2), (3,3), (1,3). Other corners are K(3,3) and C(1,2).
+I becomes K.
+T becomes C.
+Result: KC
+YA: Rectangle. Y(5,4) and A(2,2). Corners are (5,4), (2,4), (5,2), (2,2). Other corners are F(2,4) and W(5,2).
+Y becomes W.
+A becomes F.
+Result: WF
+Output Observed: The plaintext "ADITYA" encrypted using the key "OCTOBER" is DFKCWF.
+
+Possible Viva Questions:
+What is a polygraphic cipher? (A cipher that encrypts blocks of letters, like 2 in Playfair, instead of one at a time).
+Why is Playfair stronger than a simple substitution? (It encrypts 676 possible digraphs (26x26), which hides single-letter frequencies).
+How do you handle the letter 'J'? (It is combined with 'I' in the key grid).
+How is Playfair broken? (It can be broken with digraph frequency analysis. 'TH' is a very common pair in English, so you can find the most common ciphertext pair and guess it's 'TH').
+What is steganography? (From syllabus. It's the art of hiding a message, e.g., in an image, so no one knows a message even exists. Cryptography scrambles a message, so people know it's there but can't read it).
+
+Experiment 3: Encrypting Long Messages (AES/DES Modes of Operation)
+Aim: To understand why block ciphers like AES and DES need "modes of operation" to securely encrypt messages longer than a single block.
+Algorithm/Theory:
+Block Cipher: A symmetric cipher that encrypts data in fixed-size blocks (DES = 64 bits, AES = 128 bits).
+Problem: How to encrypt a 1MB file with a 128-bit (16-byte) cipher?
+Modes of Operation are the answer:
+ECB (Electronic Codebook):
+How: The simplest mode. Each block is encrypted independently with the same key.
+Weakness: This is VERY INSECURE. If you have two identical plaintext blocks (e.g., a block of white space in an image), they will encrypt to the exact same ciphertext block. This leaves a "ghost" of the original data, revealing patterns.
+CBC (Cipher Block Chaining):
+How: Before being encrypted, each plaintext block is XORed with the previous ciphertext block.
+IV: The first block needs something to XOR with, so it uses an Initialization Vector (IV), which is a random, one-time-use block.
+Strength: This "chaining" ensures that even two identical plaintext blocks will encrypt to completely different ciphertext blocks. It is secure and widely used.
+Solving (The Method): We would write a Java program using the javax.crypto library. We would take a bitmap image (which has large areas of identical color) and encrypt it twice:
+Once with the transformation AES/ECB/PKCS5Padding.
+Once with the transformation AES/CBC/PKCS5Padding.
+Output Observed:
+ECB Output: The encrypted image would still clearly show the outline or "ghost" of the original image. You could tell what it was.
+CBC Output: The encrypted image would look like complete and total random noise (static). This is the desired, secure result.
+
+Possible Viva Questions:
+Explain the difference between ECB and CBC. (ECB encrypts blocks independently, which is insecure. CBC chains blocks by XORing with the previous ciphertext, which is secure).
+What is an IV, and does it need to be secret? (An Initialization Vector. It's used to start the CBC chain. It does not need to be secret, but it must be unique and random for every message).
+What is AES? (Advanced Encryption Standard. A symmetric block cipher, 128-bit block size, key sizes of 128, 192, or 256 bits. It is the modern standard).
+What is DES? Why is it insecure? (Data Encryption Standard. A symmetric block cipher, 64-bit block size. Its 56-bit key is now too small and can be broken by brute-force).
+What is the difference between a block cipher and a stream cipher? (A block cipher encrypts in fixed chunks. A stream cipher encrypts one bit or byte at a time, like RC4).
+
+Experiment 4: Implementation and Analysis of RSA Cryptosystem
+Aim: To implement the RSA algorithm in Java to demonstrate public-key (asymmetric) cryptography.
+Algorithm/Theory: RSA is an asymmetric algorithm. It uses two different keys: a Public Key for encryption and a Private Key for decryption.
+Key Generation:
+Choose two very large prime numbers, p and q.
+Calculate the modulus: n=p×q.
+Calculate Euler's totient: ϕ(n)=(p−1)×(q−1).
+Choose a public exponent e (e.g., 65537) such that 1<e<ϕ(n) and e is coprime to ϕ(n).
+Calculate the private exponent d, which is the modular inverse of e mod ϕ(n). (i.e., d⋅e≡1(modϕ(n))).
+Keys:
+Public Key: (e,n) - Share with everyone.
+Private Key: (d,n) - Keep 100% secret.
+Encryption: C=Pe(modn) (where P is the plaintext message, as a number).
+Decryption: P=Cd(modn) (where C is the ciphertext, as a number).
+Solving (A Simple Example):
+Key Gen:
+Choose p=7, q=11.
+n=7×11=77.
+ϕ(n)=(7−1)(11−1)=6×10=60.
+Choose e=13 (it is coprime to 60).
+Find d where d×13≡1(mod60). By calculation, d=37. (since 13×37=481=(8×60)+1).
+Public Key: (13, 77)
+Private Key: (37, 77)
+Encrypt Message P=5:
+C=513(mod77)=26
+Decrypt Ciphertext C=26:
+P=2637(mod77)=5 (This is computed using Java's BigInteger.modPow() function).
+Output Observed: Using our simple keys, we successfully encrypted the message 5 to get 26. We then decrypted 26 with the private key and successfully recovered the original message 5. This proves the mathematical relationship works.
+
+Possible Viva Questions:
+What's the difference between symmetric and asymmetric cryptography? (Symmetric = one shared secret key (e.g., AES). Asymmetric = one public key, one private key (e.g., RSA)).
+What is the "trapdoor" in RSA? (The security is based on the fact that multiplying p and q to get n is easy, but factoring n back into p and q is extremely hard if the numbers are large).
+If RSA is so good, why don't we use it for everything? (It is very, very slow. In practice, we use RSA to encrypt and exchange a symmetric key (like an AES key), and then use the fast AES key to encrypt the actual data. This is called a hybrid cryptosystem).
+What else can you do with the private key? (You can "encrypt" with the private key to create a Digital Signature, which proves you are the sender and the message hasn't been tampered with).
+What is PKI (Public Key Infrastructure)? (From syllabus. It's the whole system of CAs (Certificate Authorities), X.509 certificates, etc., that manages public keys and verifies who owns them).
+
+Experiment 5: Design and Implement a Product Cipher
+Aim: To design and implement a custom "product cipher" in Java by combining a simple substitution cipher and a simple transposition cipher.
+Algorithm/Theory:
+Modern ciphers like AES are product ciphers. They get their strength from applying multiple "rounds" of simple, different operations.
+This follows Shannon's principles of Confusion and Diffusion.
+Confusion: Obscures the relationship between the key and ciphertext. (Provided by Substitution).
+Diffusion: Spreads the influence of one plaintext bit over many ciphertext bits. (Provided by Transposition).
+Our Design: We will combine two simple ciphers.
+Step 1 (Substitution): A Caesar Cipher (e.g., shift every letter by +5).
+Step 2 (Transposition): A Columnar Transposition (e.g., write the text in a grid and read it out by columns).
+Solving (Example: Encrypt "SECURITY" with Key "3-1-2"):
+Plaintext: SECURITY
+Step 1 (Substitution: Shift +5):
+S E C U R I T Y -> X J H Z W N Y D
+Step 2 (Transposition: Key "3-1-2"):
+Write the intermediate text XJHZWYD under the key columns.
+3 1 2
+X J H
+Z W N
+Y D (pad with 'X') -> Y D X
+Read out by column number (Col 1, Col 2, Col 3):
+Col 1: JWD
+Col 2: HNX
+Col 3: XZY
+Output Observed: The final ciphertext is JWDHNXXZY. To decrypt, the receiver must have the key "3-1-2" and the shift "5". They would perform the exact inverse steps in reverse order:
+Inverse Transposition (write JWDHNXXZY back into the grid).
+Inverse Substitution (shift every letter by -5).
+
+Possible Viva Questions:
+What is confusion and diffusion? (See theory).
+Which part of our cipher provides confusion? (The Caesar cipher / substitution).
+Which part provides diffusion? (The columnar transposition).
+Is this cipher secure? (No. It's a simple example. A real product cipher like AES has many complex rounds (10-14) of S-boxes, row shifts, column mixing, and key addition to make it secure).
+What is a transposition cipher? (A cipher that rearranges the order of the letters, but doesn't change the letters themselves. E.g., 'hello' -> 'eollh').
+
+Experiment 6: Study of Packet Sniffer Tool (Wireshark)
+Aim: To use the Wireshark tool to capture, view, and filter live network traffic to understand network protocols and security vulnerabilities.
+Theory:
+Wireshark: A passive network analysis tool (a "packet sniffer") that intercepts and logs all network packets.
+Promiscuous Mode: The default mode ("non-promiscuous") only captures packets for your computer. Promiscuous mode captures all packets on the local network segment (e.g., all Wi-Fi traffic around you), even if it's for other devices.
+Vulnerability: Wireshark reveals any data sent in plain text. This includes unencrypted (HTTP) websites, FTP, Telnet, and some email protocols.
+Explanation of Commands (Display Filters): Display filters let you find specific packets in a large capture.
+Address Filters:
+ip.addr == 142.250.196.78 (Shows packets to or from this Google IP).
+ip.src == 192.168.1.10 (Shows packets only from this source IP).
+Protocol Filters:
+http (Shows only HTTP traffic).
+dns (Shows only DNS (domain name) lookups).
+arp (Shows "Address Resolution Protocol" - how devices find MAC addresses).
+tcp or udp (Shows only traffic using these transport protocols).
+Port Filters:
+tcp.port == 80 (Same as http filter).
+tcp.port == 443 (Shows HTTPS traffic, but the payload will be encrypted and unreadable).
+String Filters:
+tcp contains "password" (A powerful filter that searches inside TCP packets for the literal string "password". This is great for finding insecure logins).
+Output Observed:
+We started Wireshark in promiscuous mode on the Wi-Fi interface.
+We opened a browser and went to an insecure login page (e.g., http://test.net).
+We typed "admin" and "password123" and hit login.
+We stopped the capture.
+We applied the display filter http.request.method == POST.
+We saw one packet. In the "Packet Details" pane, we expanded "Hypertext Transfer Protocol" -> "HTML Form URL Encoded".
+We could clearly see the plain text: username=admin and password=password123.
+
+Possible Viva Questions:
+Is Wireshark an active or a passive tool? (It is passive. It just listens, it doesn't send its own packets or modify traffic).
+How does Wireshark "detect" an attack? (It doesn't, you do. Wireshark is an analysis tool. An IDS (Intrusion Detection System) is what automatically detects attacks by looking for signatures).
+How do you prevent this sniffing attack? (By using encryption. HTTPS (SSL/TLS) encrypts the HTTP traffic, so even if an attacker sniffs the packets, they just see gibberish).
+What is an active attack? (An attack that modifies data or the network, e.g., a Man-in-the-Middle (MITM) attack, a DoS attack, or a virus).
+What is SSL/TLS? (From syllabus. Secure Sockets Layer / Transport Layer Security. It's the protocol that provides encryption for HTTPS, making web browsing secure).
+
+Experiment 7: Study of nmap Tool
+Aim: To use the nmap (Network Mapper) tool to perform network reconnaissance by scanning a target for open ports, running services, and OS version.
+Theory:
+nmap: An active network scanning tool. It is the first step in an attack: reconnaissance (information gathering).
+It works by sending probes to a target's ports to see how they respond.
+Port States:
+Open: The service is listening (e.g., Port 80 is open for a web server).
+Closed: The port is reachable, but no service is listening.
+Filtered: nmap can't tell. A firewall is likely blocking the probe.
+Explanation of Commands (nmap Options):
+nmap <target> (e.g., nmap scanme.nmap.org)
+Default scan. Scans the 1000 most common TCP ports.
+-sn (Ping Scan):
+nmap -sn 192.168.1.0/24
+Finds which hosts are "up" on a network without port scanning them.
+-sS (TCP SYN Scan):
+nmap -sS <target>
+The default "stealth" scan. It's fast and less likely to be logged because it never completes the TCP connection.
+-sU (UDP Scan):
+nmap -sU <target>
+Scans for UDP ports (e.g., DNS on port 53). Much slower.
+-O (OS Fingerprinting):
+nmap -O <target>
+Tries to guess the target's operating system (e.g., "Linux 4.x", "Windows 10").
+-sV (Service Version):
+nmap -sV <target>
+Tries to determine the exact software and version on an open port (e.g., "Apache httpd 2.4.7"). This is key for finding exploits.
+Output Observed: We ran nmap -sS -sV -O scanme.nmap.org:
+Starting Nmap...
+Host is up (0.12s latency).
+Not shown: 996 filtered ports
+PORT     STATE  SERVICE      VERSION
+22/tcp   open   ssh          OpenSSH 6.6.1p1 (Protocol 2.0)
+80/tcp   open   http         Apache httpd 2.4.7
+31337/tcp open  Elite
+
+Device type: general purpose
+Running: Linux 3.X
+OS details: Linux 3.10 - 3.13
+...
+Nmap done: 1 IP address (1 host up) scanned in 15.32 seconds
+This tells us the target is a Linux server, running a web server (Apache 2.4.7) and an SSH server (OpenSSH 6.6.1).
+
+Possible Viva Questions:
+Is nmap an active or passive tool? (It is active. It actively sends probes to the target).
+What's the difference between a SYN scan (-sS) and a Connect scan (-sT)? (A Connect scan completes the full TCP handshake, which is "noisy" and easily logged. A SYN scan is stealthy and just sends the first SYN packet, resetting the connection before it completes).
+What is a firewall? How can it stop nmap? (From syllabus. A firewall is a device that filters traffic. It can be configured to block nmap's probes, causing ports to show as "filtered").
+What's the difference between an IDS and a Firewall? (A Firewall blocks based on rules (IP, port). An IDS detects based on patterns (e.g., it can be trained to see "this looks like an nmap scan" and send an alert)).
+Why is the -sV (version) scan so important to an attacker? (Because exploits are specific to software versions. If they find "Apache 2.4.7", they can search for a known vulnerability in that specific version).
+
+Experiment 8: Cryptanalysis or Decoding of Vigenère Cipher
+Aim: To understand the Vigenère cipher by implementing its algorithm to encrypt a given message ("Security") using your name as the key.
+Algorithm/Theory:
+The Vigenère cipher is a polyalphabetic substitution cipher.
+It uses a keyword to apply a series of different Caesar ciphers to the plaintext.
+For example, if the key is "KEY":
+The 1st letter is shifted by 'K' (shift 10).
+The 2nd letter is shifted by 'E' (shift 4).
+The 3rd letter is shifted by 'Y' (shift 24).
+The 4th letter is shifted by 'K' (shift 10) again...
+This defeats simple frequency analysis because 'E' (the most common letter) gets encrypted to many different letters, depending on where it falls in the key cycle.
+Algorithm: Ci​=(Pi​+Ki​)(mod26). (where A=0, B=1...)
+Solving (Key = "ARJUN", Message = "SECURITY"):
+Plaintext: SECURITY
+Key: ARJUNARJ (repeat the key to match the plaintext length)
+Encrypt (Letter-by-Letter):
+S(18) + A(0) = 18 -> S
+E(4) + R(17) = 21 -> V
+C(2) + J(9) = 11 -> L
+U(20) + U(20) = 40 % 26 = 14 -> O
+R(17) + N(13) = 30 % 26 = 4 -> E
+I(8) + A(0) = 8 -> I
+T(19) + R(17) = 36 % 26 = 10 -> K
+Y(24) + J(9) = 33 % 26 = 7 -> H
+Output Observed: The plaintext "SECURITY" encrypted using the key "ARJUN" is SVLOEIKH.
+
+Possible Viva Questions:
+Why is Vigenère stronger than a mono-alphabetic cipher? (It uses multiple substitution alphabets, which flattens the letter frequency distribution, making simple frequency analysis useless).
+How is Vigenère broken? (It's not unbreakable. You can use two methods:
+Kasiski Examination: Find repeated sequences in the ciphertext. The distance between them is likely a multiple of the key length.
+Index of Coincidence (IoC): A statistical measure.
+Once you find the key length (e.g., 5), you split the text into 5 groups and do a simple frequency analysis on each group).
+What is a "one-time pad"? (A Vigenère cipher where the key is truly random and at least as long as the message. It is the only mathematically unbreakable cipher).
+What is the "OSI Security Architecture"? (From syllabus. A model that defines security services (like confidentiality, authentication), mechanisms (like encryption, digital signatures), and attacks).

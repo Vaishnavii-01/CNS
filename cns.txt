@@ -39,46 +39,48 @@ What is the "CIA Triad"? (Confidentiality, Integrity, Availability. This cipher 
 What is a passive attack? (An attack where the intruder only listens to or monitors traffic, like sniffing. Frequency analysis is a form of passive attack on a stored message).
 
 Experiment 2: Cryptanalysis or Decoding of Playfair Cipher
-Aim: To understand the Playfair cipher by implementing its algorithm to encrypt a given message (your name) using a specific key ("October").
-Algorithm/Theory: The Playfair cipher is a polygraphic substitution cipher, meaning it encrypts pairs of letters (digraphs) at a time.
-Key Grid: A 5x5 grid is created from the key.
-Fill the key's unique letters (e.g., "OCTOBER" -> O, C, T, B, E, R).
-Fill the remaining alphabet letters, combining 'I' and 'J' into one cell.
-Plaintext Rules:
-Break the message into pairs (e.g., "HELLO" -> "HE" "LL" "O").
-If a pair has double letters (like "LL"), insert an 'X' between them ("HE" "LX" "LO").
-If the message has an odd length, add a 'Z' (or 'X') at the end.
-Encryption Rules (for each pair):
-Same Row: Replace each letter with the letter immediately to its right (wrap around to the left if at the end).
-Same Column: Replace each letter with the letter immediately below it (wrap around to the top if at the bottom).
-Rectangle: Replace each letter with the letter on the same row but at the other corner of the rectangle.
-Solving (Key = "OCTOBER", Name = "ADITYA"):
-Key Grid:
-O C T B E
-R A D F G
-H I/J K L M
-N P Q S U
-V W X Y Z
-Plaintext: ADITYA
-Prepare Pairs: AD IT YA (No doubles, even length. Perfect.)
+Aim: To implement the Playfair cipher in Java to encrypt and decrypt a message ("Vaishnavi") using a specific key ("October").
+Algorithm/Theory: The Playfair cipher is a polygraphic substitution cipher that encrypts pairs of letters (digraphs). Our Java code implements this through several functions:
+Pre-processing (toLowerCase, removeSpaces, replaceJ): The code first converts both the key and plaintext to lowercase, removes all spaces, and replaces any 'j' with an 'i'.
+Key Grid (generateKeyMatrix): A 5x5 grid is created. It's filled first with the unique letters of the key (e.g., "october" -> o, c, t, b, e, r), and then with the remaining letters of the alphabet. 'i' and 'j' are treated as the same cell.
+Plaintext Prep (processInput): The code processes the plaintext to:
+Insert an 'x' between any two identical letters in a pair (e.g., "hello" -> "he" "lx" "lo").
+Append an 'x' at the end if the total number of letters is odd.
+Encryption Rules (encrypt): For each pair, the code finds their positions (findPosition) and applies one of three rules:
+Same Row: Replace each letter with the letter to its right. The code implements this as (column + 1) % 5.
+Same Column: Replace each letter with the letter below it. The code implements this as (row + 1) % 5.
+Rectangle: Replace each letter with the letter in the same row but at the other corner of the rectangle. The code implements this by swapping the column indices: matrix[row1][col2] and matrix[row2][col1].
+Decryption Rules (decrypt): This function implements the exact inverse:
+Same Row: (column + 4) % 5 (which is column - 1).
+Same Column: (row + 4) % 5 (which is row - 1).
+Rectangle: The rule is the same as encryption (swapping columns).
+Solving (Key = "October", Name = "Vaishnavi"):
+Key: october
+Plaintext: vaishnavi
+Pre-processed Key: octber
+Pre-processed Plaintext: vaishnavi -> va is hn av ix (pad with 'x' for odd length)
+Key Grid (generateKeyMatrix):
+o c t b e
+r a d f g
+h i k l m
+n p q s u
+v w x y z
 Encrypt Pairs:
-AD: Same row (Row 2). A -> D, D -> F. Result: DF
-IT: Rectangle. I(3,2) and T(1,3). Corners are (3,2), (1,2), (3,3), (1,3). Other corners are K(3,3) and C(1,2).
-I becomes K.
-T becomes C.
-Result: KC
-YA: Rectangle. Y(5,4) and A(2,2). Corners are (5,4), (2,4), (5,2), (2,2). Other corners are F(2,4) and W(5,2).
-Y becomes W.
-A becomes F.
-Result: WF
-Output Observed: The plaintext "ADITYA" encrypted using the key "OCTOBER" is DFKCWF.
+va: Rectangle (v=4,0; a=1,1). Rule: matrix[4][1] and matrix[1][0]. Result: wr
+is: Rectangle (i=2,1; s=3,3). Rule: matrix[2][3] and matrix[3][1]. Result: lp
+hn: Same Column (h=2,0; n=3,0). Rule: (row+1)%5. Result: nv
+av: Rectangle (a=1,1; v=4,0). Rule: matrix[1][0] and matrix[4][1]. Result: rw
+ix: Rectangle (i=2,1; x=4,2). Rule: matrix[2][2] and matrix[4][1]. Result: kw
+Output Observed: The program first prints the 5x5 Key Matrix.
+Encrypted Text : wrlpnvrwkw
+Decrypted Text : vaishnavix (The decrypted text matches the pre-processed plaintext, including the padding 'x').
 
 Possible Viva Questions:
 What is a polygraphic cipher? (A cipher that encrypts blocks of letters, like 2 in Playfair, instead of one at a time).
-Why is Playfair stronger than a simple substitution? (It encrypts 676 possible digraphs (26x26), which hides single-letter frequencies).
-How do you handle the letter 'J'? (It is combined with 'I' in the key grid).
-How is Playfair broken? (It can be broken with digraph frequency analysis. 'TH' is a very common pair in English, so you can find the most common ciphertext pair and guess it's 'TH').
-What is steganography? (From syllabus. It's the art of hiding a message, e.g., in an image, so no one knows a message even exists. Cryptography scrambles a message, so people know it's there but can't read it).
+Why is Playfair stronger than a simple substitution? (It encrypts 676 possible digraphs, which hides single-letter frequencies).
+How do you handle the letter 'j' in your code? (The replaceJ function converts all 'j's to 'i's in both the key and plaintext before processing).
+What does your processInput function do? (It handles two key rules: it inserts an 'x' between duplicate letters in a pair and appends an 'x' if the plaintext has an odd length).
+What is steganography? (From syllabus. It's the art of hiding a message, e.g., in an image, so no one knows a message even exists. Cryptography scrambles a message).
 
 Experiment 3: Encrypting Long Messages (AES/DES Modes of Operation)
 Aim: To understand why block ciphers like AES and DES need "modes of operation" to securely encrypt messages longer than a single block.
@@ -108,75 +110,116 @@ What is DES? Why is it insecure? (Data Encryption Standard. A symmetric block ci
 What is the difference between a block cipher and a stream cipher? (A block cipher encrypts in fixed chunks. A stream cipher encrypts one bit or byte at a time, like RC4).
 
 Experiment 4: Implementation and Analysis of RSA Cryptosystem
-Aim: To implement the RSA algorithm in Java to demonstrate public-key (asymmetric) cryptography.
-Algorithm/Theory: RSA is an asymmetric algorithm. It uses two different keys: a Public Key for encryption and a Private Key for decryption.
-Key Generation:
-Choose two very large prime numbers, p and q.
-Calculate the modulus: n=p×q.
-Calculate Euler's totient: ϕ(n)=(p−1)×(q−1).
-Choose a public exponent e (e.g., 65537) such that 1<e<ϕ(n) and e is coprime to ϕ(n).
-Calculate the private exponent d, which is the modular inverse of e mod ϕ(n). (i.e., d⋅e≡1(modϕ(n))).
+Aim:
+To implement the RSA asymmetric algorithm in Java using the BigInteger class to perform key generation, encryption, and decryption.
+Algorithm/Theory:
+RSA is an asymmetric algorithm using a Public Key and a Private Key. Our Java code implements this using BigInteger because the numbers involved are too large for standard int or long.
+Key Generation (generateKeys):
+The user provides two large primes, p and q.
+n = p.multiply(q)
+phi = (p-1).multiply(q-1)
+The code finds the public exponent e by iterating from 2 upwards until it finds a number e where e.gcd(phi) is 1.
+The private exponent d is calculated using d = e.modInverse(phi).
 Keys:
-Public Key: (e,n) - Share with everyone.
-Private Key: (d,n) - Keep 100% secret.
-Encryption: C=Pe(modn) (where P is the plaintext message, as a number).
-Decryption: P=Cd(modn) (where C is the ciphertext, as a number).
+Public Key: (e, n) - Shared with everyone.
+Private Key: (d, n) - Kept secret.
+Encryption (encrypt):
+The code uses the modPow function: C = M^e (mod{n}), which is M.modPow(e, n).
+Decryption (decrypt):
+The code uses the modPow function: M = C^d (mod{n}), which is C.modPow(d, n).
 Solving (A Simple Example):
-Key Gen:
-Choose p=7, q=11.
-n=7×11=77.
-ϕ(n)=(7−1)(11−1)=6×10=60.
-Choose e=13 (it is coprime to 60).
-Find d where d×13≡1(mod60). By calculation, d=37. (since 13×37=481=(8×60)+1).
-Public Key: (13, 77)
-Private Key: (37, 77)
-Encrypt Message P=5:
-C=513(mod77)=26
-Decrypt Ciphertext C=26:
-P=2637(mod77)=5 (This is computed using Java's BigInteger.modPow() function).
-Output Observed: Using our simple keys, we successfully encrypted the message 5 to get 26. We then decrypted 26 with the private key and successfully recovered the original message 5. This proves the mathematical relationship works.
+Let's trace the program with user inputs:
+Input: p = 7, q = 11.
+Key Generation:
+n = 7 \times 11 = 77.
+phi = (7-1) \times (11-1) = 6 \times 10 = 60.
+generateKeys loops to find e: it checks e=2...e=6 (all share factors with 60). It stops at e = 7, because gcd(7, 60) = 1.
+d = 7.modInverse(60). The code calculates d such that 7d \equiv 1 (mod{60}). This gives d = 43 (since 7 \times 43 = 301 = 5 \times 60 + 1).
+Keys Printed:
+Public Key: (7, 77)
+Private Key: (43, 77)
+Input: Message M = 5.
+Encryption:
+C = encrypt(5, 7, 77)
+C = 5^7 (mod{77}) = 47
+Decryption:
+M = decrypt(47, 43, 77)
+M = 47^{43} \pmod{77} = 5
+Output Observed:
+The program first prints all the calculated key components:
+n : 77
+phi (Euler's Quotient): 60
+e (Public Exponent): 7
+d (Private Exponent): 43
+Public Key (e, n): (7, 77)
+Private Key (d, n): (43, 77)
+Then, it prints the encryption/decryption:
+Encrypted Message: 47
+Decrypted Message: 5
 
 Possible Viva Questions:
 What's the difference between symmetric and asymmetric cryptography? (Symmetric = one shared secret key (e.g., AES). Asymmetric = one public key, one private key (e.g., RSA)).
+Why do we use BigInteger in the code? (Because RSA requires numbers that are far too large for standard int or long. BigInteger can handle numbers of virtually unlimited size).
 What is the "trapdoor" in RSA? (The security is based on the fact that multiplying p and q to get n is easy, but factoring n back into p and q is extremely hard if the numbers are large).
 If RSA is so good, why don't we use it for everything? (It is very, very slow. In practice, we use RSA to encrypt and exchange a symmetric key (like an AES key), and then use the fast AES key to encrypt the actual data. This is called a hybrid cryptosystem).
 What else can you do with the private key? (You can "encrypt" with the private key to create a Digital Signature, which proves you are the sender and the message hasn't been tampered with).
-What is PKI (Public Key Infrastructure)? (From syllabus. It's the whole system of CAs (Certificate Authorities), X.509 certificates, etc., that manages public keys and verifies who owns them).
 
 Experiment 5: Design and Implement a Product Cipher
-Aim: To design and implement a custom "product cipher" in Java by combining a simple substitution cipher and a simple transposition cipher.
+Aim:
+To design and implement a custom "product cipher" in Java by combining a simple substitution cipher and a simple transposition cipher.
 Algorithm/Theory:
-Modern ciphers like AES are product ciphers. They get their strength from applying multiple "rounds" of simple, different operations.
-This follows Shannon's principles of Confusion and Diffusion.
-Confusion: Obscures the relationship between the key and ciphertext. (Provided by Substitution).
-Diffusion: Spreads the influence of one plaintext bit over many ciphertext bits. (Provided by Transposition).
-Our Design: We will combine two simple ciphers.
-Step 1 (Substitution): A Caesar Cipher (e.g., shift every letter by +5).
-Step 2 (Transposition): A Columnar Transposition (e.g., write the text in a grid and read it out by columns).
-Solving (Example: Encrypt "SECURITY" with Key "3-1-2"):
-Plaintext: SECURITY
-Step 1 (Substitution: Shift +5):
-S E C U R I T Y -> X J H Z W N Y D
-Step 2 (Transposition: Key "3-1-2"):
-Write the intermediate text XJHZWYD under the key columns.
-3 1 2
-X J H
-Z W N
-Y D (pad with 'X') -> Y D X
-Read out by column number (Col 1, Col 2, Col 3):
-Col 1: JWD
-Col 2: HNX
-Col 3: XZY
-Output Observed: The final ciphertext is JWDHNXXZY. To decrypt, the receiver must have the key "3-1-2" and the shift "5". They would perform the exact inverse steps in reverse order:
-Inverse Transposition (write JWDHNXXZY back into the grid).
-Inverse Substitution (shift every letter by -5).
+A product cipher creates strength by using multiple, different types of ciphers in "rounds." This follows Shannon's principles of Confusion (obscuring the key-ciphertext relationship) and Diffusion (spreading plaintext influence).
+Our Java code implements a fixed 2-step product cipher:
+Step 1: Substitution (substitute)
+The code applies a simple Caesar Cipher with a fixed shift of +3.
+c = (char) ((c - base + 3) % 26 + base);
+This step provides Confusion.
+Step 2: Transposition (fillMatrixRowWise, readMatrixColumnWise)
+The code applies a Columnar Transposition using a fixed 4x4 grid.
+The substituted text is written into the 4x4 grid row by row (fillMatrixRowWise).
+The final ciphertext is read out column by column (readMatrixColumnWise).
+This step provides Diffusion.
+Decryption: The decryption process must be the exact reverse in the reverse order.
+Inverse Transposition: fillMatrixColumnWise, readMatrixRowWise.
+Inverse Substitution: reverseSubstitute (which applies a -3 shift).
+Solving (Example: Plaintext "SECURITY"):
+Input: SECURITY
+Step 1 (Substitution +3):
+substitute("SECURITY") returns VHFXULWB.
+Step 2 (Transposition):
+fillMatrixRowWise writes this into a 4x4 grid, padding with 'X':
+V H F X
+U L W B
+X X X X
+X X X X
+
+
+readMatrixColumnWise reads down the columns:
+Column 1: VUX X
+Column 2: HLX X
+Column 3: FWX X
+Column 4: XBX X
+Final Ciphertext: VUX X HLX X FWX X XBX X
+Output Observed:
+The program first asks for plaintext and truncates it to 16 letters.
+After Substitution (+3) : VHFXULWB
+Matrix :
+V H F X 
+U L W B 
+X X X X 
+X X X X 
+
+
+Encrypted text (column-wise) : VUX X HLX X FWX X XBX X
+Decrypted text : SECURITYXXXXXXXX
+(The decrypted text matches the original, plus the 'X' padding).
 
 Possible Viva Questions:
-What is confusion and diffusion? (See theory).
-Which part of our cipher provides confusion? (The Caesar cipher / substitution).
-Which part provides diffusion? (The columnar transposition).
-Is this cipher secure? (No. It's a simple example. A real product cipher like AES has many complex rounds (10-14) of S-boxes, row shifts, column mixing, and key addition to make it secure).
-What is a transposition cipher? (A cipher that rearranges the order of the letters, but doesn't change the letters themselves. E.g., 'hello' -> 'eollh').
+What is confusion and diffusion? (Confusion hides the key's relationship. Diffusion spreads the plaintext's influence. Substitution = Confusion. Transposition = Diffusion).
+Which part of your code provides confusion? (The substitute function, which is a Caesar cipher).
+Which part provides diffusion? (The matrix functions (fill.../read...) that perform a columnar transposition).
+Why is decryption the "reverse steps in reverse order"? (Because the ciphers are layered. To undo it, you must "unpeel" the last layer (transposition) first, then unpeel the first layer (substitution) second).
+Is this cipher secure? (No. Both the substitution shift (+3) and the transposition grid (4x4) are fixed and small, making it very easy to break).
 
 Experiment 6: Study of Packet Sniffer Tool (Wireshark)
 Aim: To use the Wireshark tool to capture, view, and filter live network traffic using various display filters to understand network protocols and security vulnerabilities.
@@ -257,36 +300,42 @@ What's the difference between an IDS and a Firewall? (A Firewall blocks based on
 Why is the -A (aggressive) scan so useful to an attacker? (Because it combines OS detection and version detection. Exploits are specific to software versions, so finding "Apache 2.4.7" allows an attacker to search for a known vulnerability in that specific version).
 
 Experiment 8: Cryptanalysis or Decoding of Vigenère Cipher
-Aim: To understand the Vigenère cipher by implementing its algorithm to encrypt a given message ("Security") using your name as the key.
+Aim:
+To implement the Vigenère cipher in Java to encrypt and decrypt a given message ("Security") using your name as the key.
 Algorithm/Theory:
-The Vigenère cipher is a polyalphabetic substitution cipher.
-It uses a keyword to apply a series of different Caesar ciphers to the plaintext.
-For example, if the key is "KEY":
-The 1st letter is shifted by 'K' (shift 10).
-The 2nd letter is shifted by 'E' (shift 4).
-The 3rd letter is shifted by 'Y' (shift 24).
-The 4th letter is shifted by 'K' (shift 10) again...
-This defeats simple frequency analysis because 'E' (the most common letter) gets encrypted to many different letters, depending on where it falls in the key cycle.
-Algorithm: Ci​=(Pi​+Ki​)(mod26). (where A=0, B=1...)
-Solving (Key = "ARJUN", Message = "SECURITY"):
-Plaintext: SECURITY
-Key: ARJUNARJ (repeat the key to match the plaintext length)
-Encrypt (Letter-by-Letter):
-S(18) + A(0) = 18 -> S
-E(4) + R(17) = 21 -> V
-C(2) + J(9) = 11 -> L
-U(20) + U(20) = 40 % 26 = 14 -> O
-R(17) + N(13) = 30 % 26 = 4 -> E
-I(8) + A(0) = 8 -> I
-T(19) + R(17) = 36 % 26 = 10 -> K
-Y(24) + J(9) = 33 % 26 = 7 -> H
-Output Observed: The plaintext "SECURITY" encrypted using the key "ARJUN" is SVLOEIKH.
+The Vigenère cipher is a polyalphabetic substitution cipher. It uses a keyword to apply a series of different Caesar ciphers to the plaintext.
+Our Java code implements this as follows:
+Preparation (LowerToUpper): The code first converts both the plaintext and the keyword to uppercase.
+Key Generation (generateKey): The code repeats the keyword until it is the same length as the plaintext. (e.g., Plaintext: "SECURITY", Key: "VAISHNAVI" -> Generated Key: "VAISHNAV").
+Encryption (cipherText): The code iterates through the text. For each letter, it applies the formula:
+x = (str.charAt(i) + key.charAt(j)) % 26
+cipher_text += (char) (x + 'A')
+This logic (using ASCII values) is equivalent to the standard formula C_i = (P_i + K_i)mod{26}, where A=0, B=1, etc.
+Decryption (originalText): The code implements the inverse formula:
+x = (cipher_text.charAt(i) - key.charAt(j) + 26) % 26
+orig_text += (char) (x + 'A')
+The + 26 is crucial to ensure the modulo operation works correctly for negative numbers.
+Solving (Key = "VAISHNAVI", Message = "SECURITY"):
+Input Plaintext: SECURITY
+Input Key: VAISHNAVI
+Generated Key (generateKey): VAISHNAV
+Encrypt (cipherText): (Using A=0, B=1...)
+S(18) + V(21) = 39 % 26 = 13 -> N
+E(4) + A(0) = 4 % 26 = 4 -> E
+C(2) + I(8) = 10 % 26 = 10 -> K
+U(20) + S(18) = 38 % 26 = 12 -> M
+R(17) + H(7) = 24 % 26 = 24 -> Y
+I(8) + N(13) = 21 % 26 = 21 -> V
+T(19) + A(0) = 19 % 26 = 19 -> T
+Y(24) + V(21) = 45 % 26 = 19 -> T
+Output Observed:
+The program will ask for the text and keyword.
+Ciphertext: NEKMYVTT
+Original/Decrypted Text: SECURITY
 
 Possible Viva Questions:
-Why is Vigenère stronger than a mono-alphabetic cipher? (It uses multiple substitution alphabets, which flattens the letter frequency distribution, making simple frequency analysis useless).
-How is Vigenère broken? (It's not unbreakable. You can use two methods:
-Kasiski Examination: Find repeated sequences in the ciphertext. The distance between them is likely a multiple of the key length.
-Index of Coincidence (IoC): A statistical measure.
-Once you find the key length (e.g., 5), you split the text into 5 groups and do a simple frequency analysis on each group).
+Why is Vigenère stronger than a mono-alphabetic cipher? (It uses multiple substitution alphabets (one for each letter in the key), which flattens the letter frequency distribution. 'E' gets encrypted to many different letters).
+How is Vigenère broken? (By first finding the key length. You can use the Kasiski examination (finding repeated ciphertext blocks) or Index of Coincidence (a statistical method) to guess the key length. Once you have the length (e.g., 8), you can break the ciphertext into 8 separate groups, each of which is just a simple Caesar cipher that can be broken by frequency analysis).
 What is a "one-time pad"? (A Vigenère cipher where the key is truly random and at least as long as the message. It is the only mathematically unbreakable cipher).
+In your decryption code, why do you add + 26? (This is to handle negative numbers. If you have C='B' (1) and K='D' (3), the formula is (1 - 3) = -2. (-2) % 26 can be -2. Adding 26 gives (-2 + 26) % 26 = 24 % 26 = 24, which correctly decrypts to 'Y').
 What is the "OSI Security Architecture"? (From syllabus. A model that defines security services (like confidentiality, authentication), mechanisms (like encryption, digital signatures), and attacks).

@@ -1,0 +1,491 @@
+Exp 1 & 2: Data Warehouse, ETL, & OLAP
+Write-up (using insurance.csv)
+Aim: To simulate Data Warehouse (DW) operations by performing ETL and OLAP tasks on the insurance.csv dataset.
+Theory:
+Data Warehouse (DW): A central repository of data, like our final insurance_transformed.csv, designed for analysis.
+ETL (Extract, Transform, Load): The process of building the DW.
+Extract: Read the raw insurance.csv file.
+Transform: Clean the data, e.g., encode text columns (smoker to 1/0) and create new dimensions (bmi_group).
+Load: Save the clean data to a new file.
+OLAP (Online Analytical Processing): The process of analyzing the DW. We simulate its "data cube" with operations:
+Roll-up: Summarizing data to a higher level (e.g., average charges by region).
+Slice: Filtering the cube on one dimension (e.g., only smokers).
+Pivot: Rotating the view to compare two dimensions (e.g., region vs. smoker).
+Procedure:
+ETL:
+Extract: Load insurance.csv into a pandas DataFrame.
+Transform: Encoded sex (male=1, female=0) and smoker (yes=1, no=0).
+Transform: Created a new bmi_group dimension (Underweight, Normal, Obese) from the bmi measure using pd.cut().
+Load: Saved the clean DataFrame to insurance_transformed.csv.
+OLAP: (Using the clean DataFrame)
+Roll-up: Used groupby('region')['charges'].mean() to get average charges per region.
+Slice: Filtered the data to see only smokers (df[df['smoker'] == 1]).
+Pivot: Used pivot_table(values='charges', index='region', columns='smoker') to get a 2D view.
+Conclusion: Successfully performed ETL to create a clean insurance_transformed.csv. We then performed OLAP operations (Roll-up, Slice, Pivot) to analyze average charges across different dimensions, clearly showing that smokers have higher charges in all regions.
+Python Code (Exp 1 & 2)
+import pandas as pd
+import numpy as np
+
+print("--- STARTING ETL PROCESS ---")
+
+# 1. EXTRACT
+# --- CHANGE THIS ---
+df = pd.read_csv('insurance.csv')
+print("1. Data Extracted:\n", df.head())
+
+# 2. TRANSFORM
+# Encode text columns to numbers
+df['sex'] = df['sex'].apply(lambda x: 1 if x == 'male' else 0)
+df['smoker'] = df['smoker'].apply(lambda x: 1 if x == 'yes' else 0)
+
+# Create a new 'bmi_group' dimension
+bins = [0, 18.5, 24.9, 29.9, np.inf]
+labels = ['Underweight', 'Normal', 'Overweight', 'Obese']
+df['bmi_group'] = pd.cut(df['bmi'], bins=bins, labels=labels)
+print("\n2. Transformed Data (with new columns):\n", df.head())
+
+# 3. LOAD
+df.to_csv('insurance_transformed.csv', index=False)
+print("\n3. Loaded clean data to 'insurance_transformed.csv'")
+
+# Use this transformed data for OLAP
+final_df = df
+
+print("\n--- STARTING OLAP OPERATIONS ---")
+
+# 1. ROLL-UP (Summarize by region)
+rollup = final_df.groupby('region')['charges'].mean()
+print("\n1. ROLL-UP (Avg Charges by Region):\n", rollup)
+
+# 2. SLICE (Filter for smokers only)
+slice_op = final_df[final_df['smoker'] == 1]
+print("\n2. SLICE (Smokers only):\n", slice_op[['age', 'smoker', 'charges']].head())
+
+# 3. DICE (Filter for Obese smokers)
+dice_op = final_df[
+    (final_df['smoker'] == 1) & 
+    (final_df['bmi_group'] == 'Obese')
+]
+print("\n3. DICE (Obese Smokers):\n", dice_op[['age', 'smoker', 'bmi_group', 'charges']].head())
+
+# 4. PIVOT (Compare region vs. smoker)
+pivot_op = pd.pivot_table(final_df, 
+                          values='charges', 
+                          index='region', 
+                          columns='smoker', 
+                          aggfunc='mean')
+print("\n4. PIVOT (Region vs. Smoker - 0=No, 1=Yes):\n", pivot_op)
+
+Exp 3, 4, 5: Preprocessing, EDA, & Visualization
+Write-up (using insurance.csv)
+Aim: To perform Data Preprocessing, Exploratory Data Analysis (EDA), and Visualization on the insurance.csv dataset.
+Theory:
+Data Preprocessing (Exp 3): The process of cleaning raw data. This includes handling missing values (df.isnull().sum()) and encoding categorical text data (like smoker, sex) into numbers.
+EDA (Exp 4): The process of understanding data using summary statistics. We use df.head() to inspect, df.info() to see data types, and df.describe() to get mean, min, max, etc.
+Visualization (Exp 5): Using plots to find patterns.
+Histogram (sns.histplot): Shows the distribution (spread) of a single numeric variable (like age).
+Box Plot (sns.boxplot): Compares the distribution of a numeric variable across different categories (like charges vs. smoker).
+Heatmap (sns.heatmap): Visualizes the correlation matrix, showing how strongly two variables are related.
+Procedure:
+Load: Loaded insurance.csv into a pandas DataFrame.
+Preprocess (Exp 3): Checked for missing data using df.isnull().sum(). Encoded text columns (sex, smoker, region) into numbers using LabelEncoder and pd.get_dummies() to create a clean DataFrame for the heatmap.
+EDA (Exp 4): Printed df.head() to see sample data and df.describe() to get statistical summaries.
+Visualize (Exp 5):
+Plotted a histogram of age to see the patient age distribution.
+Plotted a box plot of smoker vs. charges to compare their values.
+Plotted a heatmap of the cleaned DataFrame's correlation matrix (.corr()).
+Conclusion: Successfully preprocessed the data. EDA and visualizations revealed key patterns. The box plot clearly showed that smokers have significantly higher charges. The heatmap showed a strong positive correlation (e.g., ~0.79) between smoker status and charges, identifying it as a key predictor.
+Python Code (Exp 3, 4, 5)
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+
+# ------------------------------
+#  EXPERIMENT 3: PREPROCESSING
+# ------------------------------
+
+# --- CHANGE THIS ---
+df = pd.read_csv('insurance.csv')
+
+print("--- Data before preprocessing ---")
+print(df.info())
+print("\nMissing values:\n", df.isnull().sum())
+
+# We create a 'df_cleaned' for the heatmap
+# We keep the original 'df' for cleaner plot labels
+df_cleaned = df.copy()
+le = LabelEncoder()
+df_cleaned['sex'] = le.fit_transform(df_cleaned['sex'])
+df_cleaned['smoker'] = le.fit_transform(df_cleaned['smoker'])
+df_cleaned = pd.get_dummies(df_cleaned, columns=['region'], drop_first=True)
+
+print("\n--- Data after preprocessing (for heatmap) ---")
+print(df_cleaned.head())
+
+
+# ------------------------------
+#  EXPERIMENT 4: EDA
+# ------------------------------
+print("\n--- EDA ---")
+print("First 5 rows:\n", df.head())
+print("\nStatistical Summary:\n", df.describe())
+
+
+# ------------------------------
+#  EXPERIMENT 5: VISUALIZATION
+# ------------------------------
+print("\n--- Plotting Visualizations ---")
+
+# 1. Histogram (Distribution of one numeric column)
+plt.figure(figsize=(8, 5))
+sns.histplot(df['age'], kde=True, bins=20)
+plt.title('Distribution of Age')
+plt.show()
+
+# 2. Box Plot (Numeric vs. Categorical)
+plt.figure(figsize=(8, 5))
+sns.boxplot(x='smoker', y='charges', data=df)
+plt.title('Charges by Smoker Status')
+plt.show()
+
+# 3. Heatmap (Correlation of all numeric columns)
+plt.figure(figsize=(10, 7))
+sns.heatmap(df_cleaned.corr(), annot=True, cmap='coolwarm', fmt='.2f')
+plt.title('Correlation Heatmap')
+plt.show()
+
+Exp 6, 7, 8, 9: Classification (Decision Tree & Naïve Bayes)
+Write-up (using Breast-Cancer.csv)
+Aim: To implement and evaluate the [Select one: Decision Tree / Naïve Bayes] classification algorithm using [Select one: Python / RapidMiner] to predict the diagnosis from the Breast-Cancer.csv dataset.
+Theory:
+Classification: A supervised learning task to predict a categorical label (e.g., 'Malignant' or 'Benign').
+Decision Tree (Exp 6, 7): A flowchart-like model that splits data based on features to make decisions. It uses "Attribute Selection Measures" (like Gini Impurity) to find the best split.
+Naïve Bayes (Exp 8, 9): A fast, probabilistic classifier based on Bayes' Theorem. It "naïvely" assumes all features are independent, but works very well.
+Evaluation: We use accuracy_score to see the percentage of correct predictions and a confusion_matrix to see where the model made errors.
+Procedure (Python - Exp 7, 9):
+Load: Loaded Breast-Cancer.csv. Dropped irrelevant id and Unnamed: 32 columns.
+Preprocess: Encoded the target diagnosis ('M'/'B') into numbers (1/0) using LabelEncoder.
+Define X/y: Set X to all feature columns and y to the encoded diagnosis column.
+Split: Split the data into 70% training and 30% testing sets using train_test_split.
+Initialize Model: model = DecisionTreeClassifier() (or GaussianNB()).
+Train: model.fit(X_train, y_train).
+Predict: y_pred = model.predict(X_test).
+Evaluate: Printed the accuracy_score(y_test, y_pred) and confusion_matrix.
+Procedure (RapidMiner - Exp 6, 8):
+Retrieve Breast-Cancer.csv.
+Set Role for the diagnosis column to label.
+Split Data into 70% tra (training) and 30% tes (testing) partitions.
+Connected tra output to the [ Decision Tree | Naive Bayes ] operator.
+Connected the model to Apply Model.
+Connected tes data to Apply Model.
+Connected the result to Performance (Classification).
+Connected per (performance) output to the res (result) wall.
+Conclusion: Successfully implemented the [Algorithm Name] model. The model achieved an accuracy of [XX.XX]% on the test set, demonstrating its effectiveness in classifying tumors.
+Python Code (Exp 7 & 9)
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import accuracy_score, confusion_matrix
+
+# --- Import Models ---
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.naive_bayes import GaussianNB
+
+# 1. Load & Preprocess
+# --- CHANGE THIS ---
+df = pd.read_csv('Breast-Cancer.csv')
+target_column = 'diagnosis'
+# Drop useless columns
+df = df.drop(['id', 'Unnamed: 32'], axis=1, errors='ignore') 
+
+# Encode target 'M'/'B' to 1/0
+le = LabelEncoder()
+df[target_column] = le.fit_transform(df[target_column])
+
+# 2. Define X and y
+X = df.drop(target_column, axis=1)
+y = df[target_column]
+
+# 3. Split Data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# ------------------------------
+#  EXPERIMENT 7: DECISION TREE
+# ------------------------------
+print("\n--- Decision Tree ---")
+model_dt = DecisionTreeClassifier(random_state=42)
+model_dt.fit(X_train, y_train)
+y_pred_dt = model_dt.predict(X_test)
+
+print(f"Accuracy: {accuracy_score(y_test, y_pred_dt) * 100:.2f}%")
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_dt))
+
+# ------------------------------
+#  EXPERIMENT 9: NAÏVE BAYES
+# ------------------------------
+print("\n--- Naïve Bayes ---")
+model_nb = GaussianNB()
+model_nb.fit(X_train, y_train)
+y_pred_nb = model_nb.predict(X_test)
+
+print(f"Accuracy: {accuracy_score(y_test, y_pred_nb) * 100:.2f}%")
+print("Confusion Matrix:\n", confusion_matrix(y_test, y_pred_nb))
+
+RapidMiner Procedure (Exp 6 & 8)
+Here is the operator chain for RapidMiner:
+
+1.  `Retrieve (Breast-Cancer.csv)`
+    -> `Set Role` (Set 'diagnosis' to 'label')
+2.  `Set Role`
+    -> `Split Data` (Set partitions: 0.7 for training, 0.3 for testing)
+3.  `Split Data (tra)`
+    -> `Decision Tree` (or `Naive Bayes`) `(tra)`
+4.  `Decision Tree (mod)`
+    -> `Apply Model (mod)`
+5.  `Split Data (tes)`
+    -> `Apply Model (unl)`
+6.  `Apply Model (lab)`
+    -> `Performance (Classification) (lab)`
+7.  `Performance (per)`
+    -> `res` (Result port)
+8.  `Apply Model (lab)`
+    -> `res` (Result port)
+
+Exp 10 & 11: Regression (Linear Regression)
+Write-up (using insurance.csv)
+Aim: To implement a Linear Regression model using [Select one: Python / RapidMiner] to predict the charges from the insurance.csv dataset.
+Theory:
+Regression: A supervised learning task to predict a continuous numeric value (like charges), not a category.
+Linear Regression: A model that finds the best-fit line or plane that describes the linear relationship between the features (like age, bmi, smoker) and the target (charges).
+Evaluation: We cannot use "accuracy." We use:
+R-squared (R2): The best metric. It tells us the percentage (e.g., 0.75) of the target's variance (change) that is explained by our model.
+Mean Squared Error (MSE): The average squared difference between the actual and predicted values.
+Procedure (Python - Exp 11):
+Load: Loaded insurance.csv.
+Preprocess: Converted all text columns (sex, smoker, region) into numbers using LabelEncoder and pd.get_dummies().
+Define X/y: Set X to all feature columns and y to the numeric target charges.
+Split: Split data into 70% training and 30% testing sets.
+Initialize Model: model = LinearRegression().
+Train: model.fit(X_train, y_train).
+Predict: y_pred = model.predict(X_test).
+Evaluate: Printed the r2_score(y_test, y_pred).
+Procedure (RapidMiner - Exp 10):
+Retrieve insurance.csv.
+Set Role for the charges column to label.
+Nominal to Numerical: This is a critical step to convert sex, smoker, and region to numbers. The model will fail without it.
+Split Data (70% train, 30% test).
+Connected tra output to the Linear Regression operator.
+Connected the model and tes data to Apply Model.
+Connected the result to Performance (Regression).
+Connected per (performance) output to the res wall.
+Conclusion: Successfully implemented the Linear Regression model. The model achieved an R-squared value of [e.g., 0.76], indicating that our features (especially smoker, age, and bmi) can explain [76]% of the variance in medical charges.
+Python Code (Exp 11)
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import mean_squared_error, r2_score
+from sklearn.preprocessing import LabelEncoder
+
+# 1. Load & Preprocess
+# --- CHANGE THIS ---
+df = pd.read_csv('insurance.csv')
+target_column = 'charges'
+
+# Encode ALL text columns
+le_sex = LabelEncoder()
+df['sex'] = le_sex.fit_transform(df['sex'])
+le_smoker = LabelEncoder()
+df['smoker'] = le_smoker.fit_transform(df['smoker'])
+# Use get_dummies for columns with > 2 categories
+df = pd.get_dummies(df, columns=['region'], drop_first=True)
+print("Data preprocessed:\n", df.head())
+
+# 2. Define X and y
+X = df.drop(target_column, axis=1)
+y = df[target_column]
+
+# 3. Split Data
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+
+# ------------------------------
+#  EXPERIMENT 11: LINEAR REGRESSION
+# ------------------------------
+print("\n--- Linear Regression ---")
+model = LinearRegression()
+model.fit(X_train, y_train)
+y_pred = model.predict(X_test)
+
+# 6. Evaluate
+mse = mean_squared_error(y_test, y_pred)
+r2 = r2_score(y_test, y_pred)
+
+print(f'Mean Squared Error: {mse:.2f}')
+print(f'R-squared (R2 Score): {r2:.2f}')
+
+RapidMiner Procedure (Exp 10)
+Plaintext
+Here is the operator chain for RapidMiner:
+
+1.  `Retrieve (insurance.csv)`
+    -> `Set Role` (Set 'charges' to 'label')
+2.  `Set Role`
+    -> `Nominal to Numerical` (CRITICAL STEP! Select 'sex', 'smoker', 'region')
+3.  `Nominal to Numerical`
+    -> `Split Data` (Set partitions: 0.7 for training, 0.3 for testing)
+4.  `Split Data (tra)`
+    -> `Linear Regression` `(tra)`
+5.  `Linear Regression (mod)`
+    -> `Apply Model (mod)`
+6.  `Split Data (tes)`
+    -> `Apply Model (unl)`
+7.  `Apply Model (lab)`
+    -> `Performance (Regression) (lab)`
+8.  `Performance (per)`
+    -> `res` (Result port)
+9.  `Apply Model (lab)`
+    -> `res` (Result port - for charts!)
+
+Exp 12, 13, 14, 15: Clustering
+Write-up (using Mall_Customers.csv)
+Aim: To implement the [Select one: K-Means / DBSCAN / Agglomerative] unsupervised clustering algorithm using [Select one: Python / RapidMiner] on the Mall_Customers.csv dataset.
+Theory:
+Clustering: An unsupervised learning task to find natural groups (clusters) in data without a target label.
+Scaling: We must scale our data (StandardScaler or Normalize) before clustering. This is because all these algorithms are distance-based, and a feature with a large scale (like Annual Income) will dominate a feature with a small scale (like Spending Score).
+K-Means (Exp 12, 14): A partitioning method. We must specify k (the number of clusters). It finds k centroids and groups data around them.
+Agglomerative (Exp 15): A hierarchical (bottom-up) method. It starts with every point as a cluster and merges the closest ones.
+DBSCAN (Exp 13): A density-based method. It's good at finding odd-shaped clusters and automatically identifying outliers (noise).
+Procedure (Python - Exp 13, 14, 15):
+Load: Loaded Mall_Customers.csv. Selected only the numeric features for clustering: Annual Income (k$) and Spending Score (1-100).
+Scale: This is the most important step. Scaled the two features using StandardScaler.
+Initialize Model: model = KMeans(n_clusters=5) (or AgglomerativeClustering(n_clusters=5) or DBSCAN()).
+Get Labels: labels = model.fit_predict(X_scaled).
+Visualize: Added the labels back to the original DataFrame and plotted a sns.scatterplot() to see the final clusters.
+Procedure (RapidMiner - Exp 12):
+Retrieve Mall_Customers.csv.
+Select Attributes (Choose Annual Income (k$) and Spending Score (1-100)).
+Normalize: This is the critical scaling step.
+K-Means: Set k = 5.
+Connected clu (cluster model) and dat (data) to the res wall.
+Conclusion: Successfully implemented the [Algorithm Name] algorithm. After scaling the data, the algorithm grouped the customers into [e.g., 5] distinct clusters based on their income and spending behavior.
+Python Code (Exp 13, 14, 15)
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans, AgglomerativeClustering, DBSCAN
+
+# 1. Load & Select Features
+# --- CHANGE THIS ---
+df = pd.read_csv('Mall_Customers.csv')
+features = ['Annual Income (k$)', 'Spending Score (1-100)']
+X = df[features]
+
+# 2. Scale the Data (CRITICAL STEP)
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+# ------------------------------
+#  EXPERIMENT 14: K-MEANS
+# ------------------------------
+print("\n--- K-Means ---")
+model_kmeans = KMeans(n_clusters=5, random_state=42, n_init=10) # Set k=5
+df['kmeans_cluster'] = model_kmeans.fit_predict(X_scaled)
+
+# ------------------------------
+#  EXPERIMENT 15: AGGLOMERATIVE
+# ------------------------------
+print("\n--- Agglomerative ---")
+model_agglo = AgglomerativeClustering(n_clusters=5) # Set k=5
+df['agglo_cluster'] = model_agglo.fit_predict(X_scaled)
+
+# ------------------------------
+#  EXPERIMENT 13: DBSCAN
+# ------------------------------
+print("\n--- DBSCAN ---")
+# DBSCAN parameters (eps, min_samples) may need tuning
+model_dbscan = DBSCAN(eps=0.5, min_samples=5)
+df['dbscan_cluster'] = model_dbscan.fit_predict(X_scaled)
+
+print("\nData with cluster labels:\n", df.head())
+
+# 5. Visualize (Example with K-Means)
+print("\n--- Visualizing K-Means Clusters ---")
+plt.figure(figsize=(10, 6))
+sns.scatterplot(x=df[features[0]], 
+                y=df[features[1]], 
+                hue=df['kmeans_cluster'], # Change this to visualize other models
+                palette='viridis')
+plt.title('K-Means Clustering (k=5)')
+plt.show()
+
+RapidMiner Procedure (Exp 12)
+Here is the operator chain for RapidMiner:
+
+1.  `Retrieve (Mall_Customers.csv)`
+    -> `Select Attributes` (Select 'Annual Income (k$)', 'Spending Score (1-100)')
+2.  `Select Attributes`
+    -> `Normalize` (CRITICAL STEP! Use Z-transformation)
+3.  `Normalize`
+    -> `K-Means` (Set 'k' = 5)
+4.  `K-Means (clu)`
+    -> `res` (Result port)
+5.  `K-Means (dat)`
+    -> `res` (Result port - for charts!)
+
+Exp 16: Association Rule Mining (Apriori)
+Write-up (using Groceries_dataset.csv)
+Aim: To implement the Apriori algorithm in Python for Market Basket Analysis on the Groceries_dataset.csv.
+Theory:
+Association Rule Mining: An unsupervised method to find "if-then" rules in transactional data (e.g., "If {Bread}, then {Milk}").
+Apriori Algorithm: The classic algorithm for finding "frequent itemsets." It uses the Apriori principle: "If an itemset is frequent, all of its subsets must also be frequent."
+Metrics:
+Support: The popularity of an itemset (how often it appears).
+Confidence: The probability of the "then" part being true (e.g., 60% of people who bought {bread} also bought {milk}).
+Lift: How much stronger the rule is than random chance. Lift > 1 is a good, meaningful rule.
+Procedure:
+Load: Loaded the Groceries_dataset.csv.
+Preprocess: The raw data is in "long" format (one item per row). It must be transformed into a "wide" one-hot encoded basket matrix.
+Created a unique BasketID (from Member_number + Date).
+Used pd.crosstab() to create a matrix where each row is a BasketID, each column is an item, and values are 1 (bought) or 0 (not bought).
+Run Apriori: Used the apriori() function from mlxtend on this matrix with a low min_support (e.g., 0.005) to find all frequent itemsets.
+Generate Rules: Used the association_rules() function on the itemsets, filtering by metric='lift' and min_threshold=3 to find strong rules.
+Printed the final list of rules (antecedents, consequents, support, confidence, lift).
+Conclusion: Successfully applied the Apriori algorithm. After preprocessing the transactional data into a one-hot matrix, the algorithm found several frequent itemsets. From these, strong association rules (with Lift > 3) were generated, such as [e.g., {whole milk} -> {other vegetables}], revealing useful customer purchasing patterns.
+Python Code (Exp 16)
+import pandas as pd
+from mlxtend.frequent_patterns import apriori, association_rules
+
+# 1. Load Data
+# --- This only works with Groceries_dataset.csv ---
+df = pd.read_csv('Groceries_dataset.csv')
+print("Original Data:\n", df.head())
+
+# 2. Transform to Basket Matrix (One-Hot Encoded)
+# Create a unique ID for each basket (Member + Date)
+df['BasketID'] = df['Member_number'].astype(str) + '_' + df['Date']
+
+# Create the matrix (1 if item in basket, 0 if not)
+# We use crosstab to create the matrix
+basket_matrix = pd.crosstab(df['BasketID'], df['itemDescription'])
+# Convert all counts > 0 to 1
+basket_matrix = basket_matrix.applymap(lambda x: 1 if x > 0 else 0)
+
+print("\nBasket Matrix (One-Hot Encoded):\n", basket_matrix.head())
+
+# 3. Run Apriori
+# Find itemsets with at least 0.5% support
+frequent_itemsets = apriori(basket_matrix, min_support=0.005, use_colnames=True)
+
+print("\n--- Frequent Itemsets (Top 10) ---")
+print(frequent_itemsets.sort_values('support', ascending=False).head(10))
+
+# 4. Generate Association Rules
+# Find rules with a lift > 3 and confidence > 0.05
+rules = association_rules(frequent_itemsets, metric="lift", min_threshold=3)
+rules = rules[rules['confidence'] > 0.05]
+
+print("\n--- Discovered Association Rules ---")
+# Show only the most useful columns
+print(rules[['antecedents', 'consequents', 'support', 'confidence', 'lift']]
+      .sort_values('lift', ascending=False))
